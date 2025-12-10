@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { WordEntry } from '../types';
 import { BookOpen, Sparkles, X, ChevronRight } from 'lucide-react';
 import { generateStoryFromWords } from '../services/geminiService';
-import ReactMarkdown from 'react-markdown'; // Actually, I don't have react-markdown installed in this environment. I'll use simple rendering.
 
 interface NotebookProps {
   savedWords: WordEntry[];
