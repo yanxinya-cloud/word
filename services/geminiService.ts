@@ -1,7 +1,13 @@
 import { GoogleGenAI, Type, Schema, FunctionDeclaration } from "@google/genai";
 import { WordEntry } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Initialize safely. process.env.API_KEY is replaced by vite during build.
+const apiKey = process.env.API_KEY || "";
+if (!apiKey) {
+  console.warn("API Key is missing. AI features will not work.");
+}
+
+const ai = new GoogleGenAI({ apiKey });
 
 // ---------------------------------------------------------
 // 1. Text Definition
@@ -21,6 +27,8 @@ const definitionSchema: Schema = {
 };
 
 export const lookupWordDefinition = async (word: string): Promise<Omit<WordEntry, 'id' | 'imageUrl' | 'createdAt'>> => {
+  if (!apiKey) throw new Error("API Key is missing");
+  
   const model = "gemini-2.5-flash";
   const prompt = `Provide a dictionary entry for the word "${word}". 
   Target audience: Language learners. 
@@ -51,6 +59,8 @@ export const lookupWordDefinition = async (word: string): Promise<Omit<WordEntry
 // ---------------------------------------------------------
 
 export const generateWordImage = async (word: string, context: string): Promise<string | null> => {
+  if (!apiKey) return null;
+
   const model = "gemini-2.5-flash-image";
   const prompt = `A vivid, colorful, cartoon-style illustration representing the word "${word}". 
   Context: ${context}. 
@@ -85,6 +95,8 @@ export const generateWordImage = async (word: string, context: string): Promise<
 // ---------------------------------------------------------
 
 export const generateStoryFromWords = async (words: string[]): Promise<string> => {
+  if (!apiKey) return "Please configure your API Key to generate stories.";
+
   const model = "gemini-2.5-flash";
   const wordList = words.join(", ");
   const prompt = `Write a short, fun, and engaging story (max 150 words) that includes the following words: ${wordList}. 
@@ -108,6 +120,9 @@ export const generateStoryFromWords = async (words: string[]): Promise<string> =
 // ---------------------------------------------------------
 
 export const createChatSession = (initialContext: string) => {
+  // If no key, this might throw or fail later. 
+  // We return a mock-like object or let the real one fail gracefully if the SDK supports empty key init.
+  // But usually, we just proceed and let the sendMessage fail.
   return ai.chats.create({
     model: 'gemini-2.5-flash',
     config: {
